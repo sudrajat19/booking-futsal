@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
 export default function Login() {
-  const { push } = useRouter(); 
+  const { push } = useRouter();
   const [login, setLogin] = useState({ email: "", password: "" });
   const [msg, setMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -28,14 +29,27 @@ export default function Login() {
   const Auth = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:3008/login", login); 
+      const response = await axios.post("http://localhost:3008/login", login);
       if (response.data.success) {
         const { accessToken, refreshToken } = response.data;
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
-        push("/booking"); 
+        const decode = jwtDecode(accessToken);
+        console.log(decode.id);
+        const resLogin = await axios.get(
+          `http://localhost:3008/tampil/${decode.id}`
+        );
+        if (resLogin.status == 200) {
+          const checkAdmin = resLogin.data.role;
+          if(checkAdmin == 1){
+            push("/dataadmin");
+          }else{
+            push("/booking");
+          }
+        }
+
       } else {
-        setMsg(response.data.message); 
+        setMsg(response.data.message);
       }
     } catch (error) {
       console.error("Error saat login:", error);
@@ -44,10 +58,10 @@ export default function Login() {
   };
 
   return (
-    <>
+    <div className="min-h-screen">
       <form
         onSubmit={Auth}
-        className="w-full max-w-[296px] md:max-w-[418px] lg:max-w-[398px] bg-white shadow-lg rounded-lg p-8 mx-auto mt-8"
+        className=" w-full max-w-[296px] md:max-w-[418px] lg:max-w-[398px] bg-white shadow-lg rounded-lg p-8 mx-auto mt-8"
       >
         <p className="text-center bold text-red-500 my-1">{msg}</p>
         <h1 className="text-center mobile-h4">Masuk</h1>
@@ -58,7 +72,7 @@ export default function Login() {
           type="email"
           id="email"
           name="email"
-          onChange={handleChange} 
+          onChange={handleChange}
           className="input-border"
           placeholder="Masukkan Email"
           value={login.email}
@@ -72,7 +86,7 @@ export default function Login() {
             type={showPassword ? "text" : "password"}
             id="password"
             name="password"
-            onChange={handleChange} 
+            onChange={handleChange}
             className="outline-none border-none w-full"
             placeholder="*********"
             value={login.password}
@@ -95,6 +109,6 @@ export default function Login() {
           </Link>
         </p>
       </form>
-    </>
+    </div>
   );
 }

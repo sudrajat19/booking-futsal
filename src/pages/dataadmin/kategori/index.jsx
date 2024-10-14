@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { jwtDecode } from "jwt-decode";
 
-export default function Pengunjung() {
+export default function Kategori() {
   const [search, setSearch] = useState("");
-  const [visits, setVisits] = useState([]);
+  const [kategories, setKategories] = useState([]);
   const { push } = useRouter();
+
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -35,26 +36,27 @@ export default function Pengunjung() {
     };
     fetch();
   }, []);
+
   useEffect(() => {
-    const fetchJadwal = async () => {
+    const fetchLapangan = async () => {
       try {
-        const url = "http:///localhost:3008/tampiljadwalpesanan";
+        const url = "http:///localhost:3008/tampilkategori";
         const res = await axios.get(url);
-        setVisits(res.data);
+        setKategories(res.data);
       } catch (error) {
         console.error("Ada kesalahan dalam mengambil data:", error);
       }
     };
-    fetchJadwal();
+    fetchLapangan();
   }, []);
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
   };
 
-  const handleDeleteVisits = (id_jadwal) => {
+  const handleDeleteKategori = (id_kategori) => {
     axios
-      .delete(`http://localhost:3008/deletejadwal/${id_jadwal}`)
+      .delete(`http://localhost:3008/deletekategori/${id_kategori}`)
       .then(() => {
         location.reload();
       })
@@ -64,16 +66,19 @@ export default function Pengunjung() {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const visitsPerPage = 4;
-  const filteredVisit = visits.filter((work) =>
-    work.nama_lapangan.toLowerCase().includes(search.toLowerCase())
+  const kategoriesPerPage = 4;
+  const filteredKategori = kategories.filter((kategori) =>
+    kategori.tipe_lapangan.toLowerCase().includes(search.toLowerCase())
   );
 
-  const indexOfLastVisit = currentPage * visitsPerPage;
-  const indexOfFirstVisit = indexOfLastVisit - visitsPerPage;
-  const currentVisit = filteredVisit.slice(indexOfFirstVisit, indexOfLastVisit);
+  const indexOfLasKategori = currentPage * kategoriesPerPage;
+  const indexOfFirstKategori = indexOfLasKategori - kategoriesPerPage;
+  const currentKategori = filteredKategori.slice(
+    indexOfFirstKategori,
+    indexOfLasKategori
+  );
 
-  const totalPages = Math.ceil(filteredVisit.length / visitsPerPage);
+  const totalPages = Math.ceil(filteredKategori.length / kategoriesPerPage);
 
   const handlePrevious = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -82,11 +87,12 @@ export default function Pengunjung() {
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
+
   return (
     <>
       <Layout>
         <main className="p-8 font-nunito md:w-1/2 lg:w-full">
-          <h2 className="text-xl font-bold">Pengelolaan Lapangan</h2>
+          <h2 className="text-xl font-bold">Pengelolaan Kategori</h2>
           <div className="flex justify-between mt-9">
             <div className="flex gap-2">
               <input
@@ -102,46 +108,49 @@ export default function Pengunjung() {
                 <img src="/gambar/search.png" alt="search" />
               </button>
             </div>
-            <div></div>
+            <div>
+              <button
+                className="bg-secondary-10 w-24 h-8 rounded-lg text-base font-nunito"
+                onClick={() => push("/dataadmin/kategori/settingKategori")}
+              >
+                Tambah
+              </button>
+            </div>
           </div>
           <div className="mt-12 rounded-lg ">
             <table className="w-full text-left overflow-x-auto">
               <thead className="bg-secondary-5">
                 <tr>
                   <th className="p-4 border-b">No</th>
-                  <th className="p-4 border-b">Id user</th>
-                  <th className="p-4 border-b">No Telp</th>
-                  <th className="p-4 border-b">Jam Mulai</th>
-                  <th className="p-4 border-b">Jam Akhir</th>
-                  <th className="p-4 border-b">Tanggal</th>
-                  <th className="p-4 border-b">Id_gor</th>
-                  <th className="p-4 border-b">Id_detail</th>
+                  <th className="p-4 border-b">Tipe Lapangan</th>
+                  <th className="p-4 border-b">Photo</th>
                   <th className="p-4 border-b">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {currentVisit.map((work, index) => (
+                {currentKategori.map((kategori, index) => (
                   <tr key={index} className={`hover:bg-gray-100`}>
+                    {console.log(kategori)}
                     <td className="p-4 border-b">
-                      {indexOfFirstVisit + index + 1}
+                      {indexOfFirstKategori + index + 1}
                     </td>
+                    <td className="p-4 border-b">{kategori.tipe_lapangan}</td>
                     <td className="p-4 border-b">
-                      {work.id_users}-{work.nama}
-                    </td>
-                    <td className="p-4 border-b">{work.no_telp}</td>
-                    <td className="p-4 border-b">{work.jam_mulai}</td>
-                    <td className="p-4 border-b">{work.jam_akhir}</td>
-                    <td className="p-4 border-b">{work.tanggal}</td>
-                    <td className="p-4 border-b">
-                      {work.id_gor}-{work.nama_gor}
-                    </td>
-                    <td className="p-4 border-b">
-                      {work.id_detail}-{work.nama_lapangan}
+                      <img
+                        src={
+                          process.env.NEXT_PUBLIC_BASE_API_URL +
+                          "/" +
+                          kategori.photo
+                        }
+                        alt=""
+                      />
                     </td>
                     <td className="p-4 border-b flex">
                       <button
                         className="text-red-500 hover:underline"
-                        onClick={() => handleDeleteVisits(work.id_jadwal)}
+                        onClick={() =>
+                          handleDeleteKategori(kategori.id_kategori)
+                        }
                       >
                         Delete
                       </button>

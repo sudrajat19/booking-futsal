@@ -20,34 +20,69 @@ export default function RincianPage({
     }
   }, [push]);
 
-  let total = selectedJam.length * detailLapangan[0].harga_perjam;
+  let total = selectedJam.length * (detailLapangan[0]?.harga_perjam || 0);
+
 
   const handlePesan = async (e) => {
     e.preventDefault();
-
-    const hasil = selectedJam.map((jam) => {
-      const [jam_mulai, jam_akhir] = jam.split(" - ");
-      return { jam_mulai, jam_akhir };
-    });
-
-    const data = hasil.map((d) => ({
-      ...d,
-      tanggal: selectTgl,
-      id_detail: detailLapangan[0].id_detail,
-      id_gor: detailLapangan[0].id_gor,
-      id_users: idUser
-    }));
+  
     try {
       setIsLoading(true);
-      const response = await axios.post(
-        "http://localhost:3008/addalljadwalpesanan",
-        data
+  
+      let responseR = await axios.get(
+        `http://localhost:3008/tampilrincianpembayaranbystatus/${idUser}`
       );
-      if (response.status === 201) {
-        alert("Berhasil memesan lapangan.");
-        push(`/lapangan/${query.detail}/${idUser}`);
-      } else {
-        alert("Gagal membuat pesanan, coba lagi.");
+      let rincian = responseR.data;
+  
+      if (!rincian || rincian.length === 0) {
+        const formData = new FormData();
+        formData.append("id_users", idUser);
+        formData.append("status_bayar", "active");
+        formData.append("bukti_transfer", "null");
+  
+        const responseRincian = await axios.post(
+          "http://localhost:3008/addrincianpembayaran",
+          formData
+        );
+        
+        if (responseRincian.status === 201) {
+          console.log("Berhasil menambahkan rincian");
+          responseR = await axios.get(
+            `http://localhost:3008/tampilrincianpembayaranbystatus/${idUser}`
+          );
+          rincian = responseR.data;
+        } else {
+          alert("Gagal membuat rincian, coba lagi.");
+          return; 
+        }
+      }
+  
+      const hasil = selectedJam.map((jam) => {
+        const [jam_mulai, jam_akhir] = jam.split(" - ");
+        return { jam_mulai, jam_akhir };
+      });
+  
+      if (rincian && rincian.length > 0) {
+        const data = hasil.map((d) => ({
+          ...d,
+          tanggal: selectTgl,
+          id_detail: detailLapangan[0].id_detail,
+          id_gor: detailLapangan[0].id_gor,
+          id_users: idUser,
+          id_rincibayar: rincian[0].id_rincibayar, 
+        }));
+  
+        const response = await axios.post(
+          "http://localhost:3008/addalljadwalpesanan",
+          data
+        );
+        
+        if (response.status === 201) {
+          alert("Berhasil memesan lapangan.");
+          push(`/lapangan/${query.detail}/${idUser}`);
+        } else {
+          alert("Gagal membuat pesanan, coba lagi.");
+        }
       }
     } catch (error) {
       console.error("Error saat memesan lapangan:", error);
@@ -56,10 +91,17 @@ export default function RincianPage({
       setIsLoading(false);
     }
   };
+  const formatToRupiah = (number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(number);
+  };
 
   return (
     <>
-      <div className="p-4 shadow-card sm:row-start-8 sm:col-span-2 lg:col-start-3 lg:col-end-5 lg:row-start-4 lg:row-end-7">
+      <div>
         <h2 className="semibold-bs">Rincian Pesanan</h2>
         <img src="/gambar/Line 7.png" className="w-full my-5" />
         {detailLapangan.length > 0 && (
@@ -83,13 +125,13 @@ export default function RincianPage({
             >
               <p>{jam}</p>
               {detailLapangan.length > 0 && (
-                <p>{detailLapangan[0].harga_perjam}</p>
+                <p>{formatToRupiah(detailLapangan[0].harga_perjam)}</p>
               )}
             </div>
           ))}
           <div className="flex justify-between rounded">
             <p className="normal-sm">Durasi {selectedJam.length} Jam</p>
-            <p className="normal-sm">Total Rp.{total}</p>
+            <p className="normal-sm">Total {formatToRupiah(total)}</p>
           </div>
 
           <button

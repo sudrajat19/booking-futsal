@@ -17,6 +17,9 @@ export default function Navbar() {
       setIsOpen(true);
     }
   }, []);
+  const handleProfile = () => {
+    push("/profile");
+  };
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
@@ -32,7 +35,8 @@ export default function Navbar() {
             alt="logo"
             width={32}
             height={32}
-            className="w-8 h-8"
+            className="w-8 h-8 cursor-pointer"
+            onClick={handleProfile}
           />
           {isOpen ? (
             <>
@@ -50,7 +54,7 @@ export default function Navbar() {
                   <Link href="/kategori">Kategori</Link>
                 </li>
                 <li>
-                  <a href="#">History</a>
+                  <a href="/history">History</a>
                 </li>
               </ul>
             </>

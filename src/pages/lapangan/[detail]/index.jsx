@@ -4,12 +4,15 @@ import axios from "axios";
 import Layout from "../../layout";
 import PesanPage from "../../../components/pesanPage";
 import Fasilitas from "@/components/fasilitas";
-export default function DetailLapanganPage() {
+import DetailLapanganSkeleton from "@/atom/skeleton";
 
+export default function DetailLapanganPage() {
   const { query, push } = useRouter();
   const [fasilitas, setFasilitas] = useState([]);
   const [detail, setDetail] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -18,56 +21,69 @@ export default function DetailLapanganPage() {
   }, [push]);
 
   useEffect(() => {
-    const fetchLapangan = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const url = `http://localhost:3008/tampilsemuafasilitas/${query.detail}`;
-        const res = await axios.get(url);
-        setFasilitas(res.data);
+        const [fasilitasRes, detailRes] = await Promise.all([
+          axios.get(
+            `http://localhost:3008/tampilsemuafasilitas/${query.detail}`
+          ),
+          axios.get(
+            `http://localhost:3008/tampilsemuadetaillapangan/${query.detail}`
+          ),
+        ]);
+        setFasilitas(fasilitasRes.data);
+        setDetail(detailRes.data);
       } catch (error) {
         console.error("Ada kesalahan dalam mengambil data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchLapangan();
+    if (query.detail) {
+      fetchData();
+    }
   }, [query.detail]);
 
-  useEffect(() => {
-    const fetchLapangan = async () => {
-      try {
-        const urlL = `http://localhost:3008/tampilsemuadetaillapangan/${query.detail}`;
-        const resLapangan = await axios.get(urlL);
-        setDetail(resLapangan.data);
-      } catch (error) {
-        console.error("Ada kesalahan dalam mengambil data:", error);
-      }
-    };
+  const formatToRupiah = (number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(number);
+  };
 
-    fetchLapangan();
-  }, [query.detail]);
   return (
-    <>
-      <Layout>
-        <div className="container mx-auto bg-white">
+    <Layout>
+      <div className="container mx-auto grid bg-white">
+        {isLoading ? (
+          <DetailLapanganSkeleton />
+        ) : (
           <div>
             <section className="w-full py-8 px-[100px] pr-0 mt-8">
               <div className="flex gap-5 mb-4 border-solid overflow-x-scroll">
-                <img src="/gambar/unsplash_LSOTmGcdaKQ.png" alt="" />
-                <img src="/gambar/unsplash_LSOTmGcdaKQ.png" alt="" />
-                <img src="/gambar/unsplash_LSOTmGcdaKQ.png" alt="" />
+                {[
+                  "/gambar/unsplash_LSOTmGcdaKQ.png",
+                  "/gambar/unsplash_LSOTmGcdaKQ.png",
+                  "/gambar/unsplash_LSOTmGcdaKQ.png",
+                ].map((src, index) => (
+                  <img key={index} src={src} alt={`Lapangan ${index + 1}`} />
+                ))}
               </div>
               <div className="flex gap-8 justify-center">
                 <a href="#">
                   <img
                     src="/gambar/Vector (29).png"
                     className="shadow-card"
-                    alt="asdaw"
+                    alt="icon1"
                   />
                 </a>
                 <a href="#">
                   <img
                     src="/gambar/Vector (28).png"
                     className="shadow-card"
-                    alt="asdaw"
+                    alt="icon2"
                   />
                 </a>
               </div>
@@ -83,8 +99,9 @@ export default function DetailLapanganPage() {
                     className="card gap-4 shadow-card hover:bg-neutral-80 sm:block cursor-pointer"
                   >
                     <img
-                      src="/gambar/Rectangle 91 (4).png"
+                      src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/${dtl.image}`}
                       className="w-full mb-4"
+                      alt={dtl.nama_lapangan}
                     />
                     <div>
                       <h2 className="semibold-bs mb-3">{dtl.nama_lapangan}</h2>
@@ -94,26 +111,25 @@ export default function DetailLapanganPage() {
                           <img
                             src="/gambar/sports_soccer.png"
                             className="btn-sm"
+                            alt="soccer icon"
                           />
                           Indoor
                         </li>
-                        <li className="semibold-sm  ">
-                          Rp.{dtl.harga_perjam}/Sesi
+                        <li className="semibold-sm">
+                          {formatToRupiah(dtl.harga_perjam)}/Sesi
                         </li>
                       </ul>
                     </div>
                   </div>
                 ))}
-                {selectedId ? (
-                  <PesanPage selectedId={selectedId} detail={detail} />
-                ) : (
-                  <></>
+                {selectedId && (
+                    <PesanPage selectedId={selectedId} detail={detail} />
                 )}
               </div>
             </section>
           </div>
-        </div>
-      </Layout>
-    </>
+        )}
+      </div>
+    </Layout>
   );
 }

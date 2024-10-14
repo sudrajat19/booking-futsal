@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { jwtDecode } from "jwt-decode";
 
-export default function Pengunjung() {
+export default function Promo() {
   const [search, setSearch] = useState("");
-  const [visits, setVisits] = useState([]);
+  const [promos, setPromos] = useState([]);
   const { push } = useRouter();
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -36,25 +36,30 @@ export default function Pengunjung() {
     fetch();
   }, []);
   useEffect(() => {
-    const fetchJadwal = async () => {
+    const fetchLapangan = async () => {
       try {
-        const url = "http:///localhost:3008/tampiljadwalpesanan";
+        const url = "http:///localhost:3008/tampilpromo";
         const res = await axios.get(url);
-        setVisits(res.data);
+        setPromos(res.data);
       } catch (error) {
         console.error("Ada kesalahan dalam mengambil data:", error);
       }
     };
-    fetchJadwal();
+    fetchLapangan();
   }, []);
+  console.log(promos);
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
   };
+  const handleEditPromo = (promo) => {
+    localStorage.setItem("promo", JSON.stringify(promo));
+    push("/dataadmin/promo/settingPromo");
+  };
 
-  const handleDeleteVisits = (id_jadwal) => {
+  const handleDeleteGor = (id_promo) => {
     axios
-      .delete(`http://localhost:3008/deletejadwal/${id_jadwal}`)
+      .delete(`http://localhost:3008/deletepromo/${id_promo}`)
       .then(() => {
         location.reload();
       })
@@ -64,16 +69,16 @@ export default function Pengunjung() {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const visitsPerPage = 4;
-  const filteredVisit = visits.filter((work) =>
-    work.nama_lapangan.toLowerCase().includes(search.toLowerCase())
+  const promoPerPage = 4;
+  const filteredGor = promos.filter((promo) =>
+    promo.nama_promo.toLowerCase().includes(search.toLowerCase())
   );
 
-  const indexOfLastVisit = currentPage * visitsPerPage;
-  const indexOfFirstVisit = indexOfLastVisit - visitsPerPage;
-  const currentVisit = filteredVisit.slice(indexOfFirstVisit, indexOfLastVisit);
+  const indexOfLastGor = currentPage * promoPerPage;
+  const indexOfFirstGor = indexOfLastGor - promoPerPage;
+  const currentGor = filteredGor.slice(indexOfFirstGor, indexOfLastGor);
 
-  const totalPages = Math.ceil(filteredVisit.length / visitsPerPage);
+  const totalPages = Math.ceil(filteredGor.length / promoPerPage);
 
   const handlePrevious = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -82,6 +87,7 @@ export default function Pengunjung() {
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
+
   return (
     <>
       <Layout>
@@ -102,46 +108,44 @@ export default function Pengunjung() {
                 <img src="/gambar/search.png" alt="search" />
               </button>
             </div>
-            <div></div>
+            <div>
+              <button
+                className="bg-secondary-10 w-24 h-8 rounded-lg text-base font-nunito"
+                onClick={() => push("/dataadmin/promo/settingPromo")}
+              >
+                Tambah
+              </button>
+            </div>
           </div>
           <div className="mt-12 rounded-lg ">
             <table className="w-full text-left overflow-x-auto">
               <thead className="bg-secondary-5">
                 <tr>
                   <th className="p-4 border-b">No</th>
-                  <th className="p-4 border-b">Id user</th>
-                  <th className="p-4 border-b">No Telp</th>
-                  <th className="p-4 border-b">Jam Mulai</th>
-                  <th className="p-4 border-b">Jam Akhir</th>
-                  <th className="p-4 border-b">Tanggal</th>
-                  <th className="p-4 border-b">Id_gor</th>
-                  <th className="p-4 border-b">Id_detail</th>
+                  <th className="p-4 border-b">Nama Promo</th>
+                  <th className="p-4 border-b">Potongan</th>
                   <th className="p-4 border-b">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {currentVisit.map((work, index) => (
+                {currentGor.map((promo, index) => (
                   <tr key={index} className={`hover:bg-gray-100`}>
+                    {console.log(promo)}
                     <td className="p-4 border-b">
-                      {indexOfFirstVisit + index + 1}
+                      {indexOfFirstGor + index + 1}
                     </td>
-                    <td className="p-4 border-b">
-                      {work.id_users}-{work.nama}
-                    </td>
-                    <td className="p-4 border-b">{work.no_telp}</td>
-                    <td className="p-4 border-b">{work.jam_mulai}</td>
-                    <td className="p-4 border-b">{work.jam_akhir}</td>
-                    <td className="p-4 border-b">{work.tanggal}</td>
-                    <td className="p-4 border-b">
-                      {work.id_gor}-{work.nama_gor}
-                    </td>
-                    <td className="p-4 border-b">
-                      {work.id_detail}-{work.nama_lapangan}
-                    </td>
+                    <td className="p-4 border-b">{promo.nama_promo}</td>
+                    <td className="p-4 border-b">Rp.{promo.potongan_promo}</td>
                     <td className="p-4 border-b flex">
                       <button
+                        className="text-blue-500 hover:underline mr-2"
+                        onClick={() => handleEditPromo(promo)}
+                      >
+                        Edit
+                      </button>
+                      <button
                         className="text-red-500 hover:underline"
-                        onClick={() => handleDeleteVisits(work.id_jadwal)}
+                        onClick={() => handleDeleteGor(promo.id_promo)}
                       >
                         Delete
                       </button>

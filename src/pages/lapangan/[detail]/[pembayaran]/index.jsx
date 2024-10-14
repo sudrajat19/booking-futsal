@@ -7,8 +7,9 @@ import { useEffect, useState } from "react";
 import PesanPage from "@/components/pesanPage";
 import Fasilitas from "@/components/fasilitas";
 export default function Pembayaran() {
-  const { query, push } = useRouter();
+  const { push } = useRouter();
   const [rincian, setRincian] = useState([]);
+  const [rincianPembayaran, setRincianPembayaran] = useState([]);
   const [fasilitas, setFasilitas] = useState([]);
   const [idUser, setIdUser] = useState(null);
   const [total, setTotal] = useState(null);
@@ -18,7 +19,13 @@ export default function Pembayaran() {
   const [promoPotongan, setPromoPotongan] = useState(0);
   const [jenisPembayaran, setJenisPembayaran] = useState();
   const [metodePembayaran, setMetodePembayaran] = useState();
-
+  const [promoP, setPromoP] = useState();
+  const resetState = () => {
+    setJenisPembayaran("");
+    setMetodePembayaran("");
+    setPromoPotongan(0);
+    setPromoP(null);
+  };
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const decoded = jwtDecode(token);
@@ -32,7 +39,11 @@ export default function Pembayaran() {
       if (!idUser) return;
 
       try {
-        const url = `http://localhost:3008/tampilpesananbyusers/${idUser}`;
+        let responseR = await axios.get(
+          `http://localhost:3008/tampilrincianpembayaranbystatus/${idUser}`
+        );
+        setRincianPembayaran(responseR.data);
+        const url = `http://localhost:3008/tampilpesananbytoday/${idUser}/${responseR.data[0].id_rincibayar}`;
         const res = await axios.get(url);
         setRincian(res.data);
         setSelectId(res.data[0].id_detail);
@@ -46,28 +57,73 @@ export default function Pembayaran() {
           setFasilitas(fasilitasRes.data);
           setIdGor(fasilitasRes.data[0].id_gor);
         }
+        const responsePromo = await axios.get(
+          `http://localhost:3008/tampilpromobypromo/${promoPotongan}`
+        );
+        setPromoP(responsePromo.data);
       } catch (error) {
         console.error("Ada kesalahan dalam mengambil data:", error);
       }
     };
 
     fetchData();
-  }, [idUser,idGor]);
+  }, [idUser, promoPotongan]);
 
   const handleAdd = () => {
     setAdd(!add);
   };
 
-  const handleBayar = (jenisPembayaran,metodePembayaran) => {
-    if(jenisPembayaran && metodePembayaran && promoPotongan){
-      push(`/lapangan/${idGor}/${idUser}/bayar`);
-      localStorage.setItem('jenisPembayaran',JSON.stringify(jenisPembayaran))
-      localStorage.setItem('metodePembayaran',JSON.stringify(metodePembayaran))
-      localStorage.setItem('idGor',JSON.stringify(idGor))
-    }else{
-      alert('pilih pembayaran')
+  const handleBayar = async (jenisPembayaran, metodePembayaran) => {
+    if (jenisPembayaran && metodePembayaran) {
+      const formData = new FormData();
+      formData.append("id_jenis", jenisPembayaran);
+      formData.append("id_pembayaran", metodePembayaran);
+      
+      if (promoP && promoP.length > 0) {
+        formData.append("id_promo", promoP[0].id_promo);
+      }
+      
+      formData.append("id_users", idUser);
+      formData.append("status_bayar", "belum bayar");
+      formData.append("bukti_transfer",null); 
+  
+      formData.forEach((value, key) => {
+        console.log(`${key}, ${value}`);
+      });
+  
+      if (rincianPembayaran && rincianPembayaran.length >= 0) {
+        const idRinciBayar = rincianPembayaran[0].id_rincibayar;
+        console.log("ini yang saya cek", idRinciBayar);
+  
+        try {
+          console.log("Mengirim pembayaran...");
+          
+          const response = await axios.put(
+            `http://localhost:3008/updaterincianpembayaran/${idRinciBayar}`,
+            formData
+          );
+  
+          console.log("Response dari server:", response);
+  
+          if (response.status === 201) {
+            resetState();
+            push(`/lapangan/${idGor}/${idUser}/bayar`);
+          } else {
+            console.error("Pembayaran gagal:", response.statusText);
+            alert("Pembayaran gagal, silakan coba lagi.");
+          }
+        } catch (error) {
+          console.error("Error saat melakukan pembayaran:", error);
+          alert("Terjadi kesalahan saat melakukan pembayaran.");
+        }
+      } else {
+        alert("Data rincian pembayaran tidak ditemukan.");
+      }
+    } else {
+      alert("Pilih pembayaran terlebih dahulu.");
     }
   };
+  
 
   const handleBatal = async (id_jadwal) => {
     if (!id_jadwal) return;
@@ -88,8 +144,9 @@ export default function Pembayaran() {
       console.error("Ada kesalahan dalam membatalkan pesanan:", error);
     }
   };
-  const totalSetelahPromo = total + 5000 - promoPotongan;
 
+
+  const totalSetelahPromo = total + 5000 - promoPotongan;
 
   return (
     <>
@@ -176,8 +233,11 @@ export default function Pembayaran() {
                   <p>Total Pembayaran</p>
                   <p>Rp {totalSetelahPromo}</p>
                 </div>
-                <button onClick={()=>handleBayar(jenisPembayaran,metodePembayaran)} className="btn-blue flex gap-2">
-                  <div  className="flex gaap-2 mx-auto">
+                <button
+                  onClick={() => handleBayar(jenisPembayaran, metodePembayaran)}
+                  className="btn-blue flex gap-2"
+                >
+                  <div className="flex gaap-2 mx-auto">
                     <img src="/gambar/payments.png " />
                     Bayar
                   </div>
@@ -206,8 +266,11 @@ export default function Pembayaran() {
                   <p>Total Pembayaran</p>
                   <p>Rp {totalSetelahPromo}</p>
                 </div>
-                <button onClick={()=>handleBayar(jenisPembayaran,metodePembayaran)} className="btn-blue flex gap-2">
-                  <div  className="flex gap-2 mx-auto">
+                <button
+                  onClick={() => handleBayar(jenisPembayaran, metodePembayaran)}
+                  className="btn-blue flex gap-2"
+                >
+                  <div className="flex gap-2 mx-auto">
                     <img src="/gambar/payments.png " />
                     Bayar
                   </div>

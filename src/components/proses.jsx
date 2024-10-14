@@ -1,3 +1,4 @@
+import SkeletonProses from "@/atom/skeletonProses";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
@@ -12,6 +13,7 @@ export default function Proses({
   const [selectJenis, setSelectJenis] = useState(null);
   const [selectMetod, setSelectMetod] = useState([]);
   const [selectPromo, setSelectPromo] = useState([]);
+  const [isLoading,setIsLoading] =useState(true)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -26,6 +28,8 @@ export default function Proses({
         setmetod(response.data);
       } catch (error) {
         console.error("Ada kesalahan dalam mengambil data:", error);
+      } finally{
+        setIsLoading(false)
       }
     };
     fetchData();
@@ -55,7 +59,11 @@ export default function Proses({
 
   return (
     <>
-      <div className=" bg-white p-4 rounded-lg shadow-card col-span-2">
+    {isLoading ? (
+      <SkeletonProses/>
+    ):(
+
+      <div className=" bg-white p-4 rounded shadow-card col-span-2">
         <div>
           <h2 className="semibold-bs">Pembayaran</h2>
           <img src="/gambar/Line 7.png" className="w-full my-4" />
@@ -85,13 +93,13 @@ export default function Proses({
                   <button
                     onClick={() => handleMetod(mtd.id_pembayaran)}
                     key={index}
-                    className={`text-xs flex gap-2 border  p-2 justify-center rounded  ${
+                    className={`text-xs flex gap-2 border uppercase  p-2 justify-center rounded  ${
                       selectMetod === mtd.id_pembayaran
                         ? "bg-primary-50 text-white"
                         : "border-primary-50 text-primary-50"
                     }`}
                   >
-                    <img src="/gambar/gopay.png" className="self-center" />
+                    <img src={process.env.NEXT_PUBLIC_BASE_API_URL + "/" + mtd.logo} className="self-center" />
                     {mtd.metode_pembayaran}
                   </button>
                 ))}
@@ -122,6 +130,7 @@ export default function Proses({
           </div>
         </div>
       </div>
+    )}
     </>
   );
 }

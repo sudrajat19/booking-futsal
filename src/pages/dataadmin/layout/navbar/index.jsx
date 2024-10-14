@@ -9,18 +9,19 @@ export default function Navbar() {
   const handleToggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+  
   useEffect(() => {
-    const token = localStorage.getItem("accessAdmin");
+    const token = localStorage.getItem("accessToken");
     if (token) {
       setIsOpen(true);
     }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("accessAdmin");
-    localStorage.removeItem("refreshAdmin");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setIsOpen(false);
-    push("/dataadmin");
+    push("/");
   };
 
   return (

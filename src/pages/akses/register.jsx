@@ -23,9 +23,16 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newUser = { ...register };
+    const formData = new FormData();
+    formData.append("nama", register.nama);
+    formData.append("email", register.email);
+    formData.append("password", register.password);
+    formData.append("no_telp", register.no_telp);
+    formData.append("photo", null);
+    formData.append("role", 2);
+    // const newUser = { ...register };
     try {
-      const res = await axios.post(`http://localhost:3008/register/`, newUser);
+      const res = await axios.post(`http://localhost:3008/register/`, formData);
       if (res.status === 200) {
         alert("Berhasil registrasi.");
         push("/");
@@ -41,7 +48,7 @@ export default function Register() {
 
   return (
     <>
-      <div className="bg-custom bg-cover p-[29px] ">
+      <div className="min-h-screen bg-custom bg-cover p-[29px] ">
         <form
           onSubmit={handleSubmit}
           className="w-full max-w-[298px] md:max-w-[418px] lg:max-w-[398px] bg-white shadow-sw-frm rounded-lg p-8 mx-auto mt-6"

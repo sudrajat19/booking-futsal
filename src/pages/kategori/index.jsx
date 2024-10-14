@@ -9,11 +9,15 @@ export default function Kategori() {
   const [lapangan, setLapangan] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedLapangan, setSelectedLapangan] = useState(null);
-  const token = localStorage.getItem("accessToken");
-  if (!token) {
-    push("/");
-  }
+  const [token,setToken] = useState("")
+
   useEffect(() => {
+    const tempToken = localStorage.getItem("accessToken")
+    setToken(tempToken)
+    if (!tempToken) {
+      push("/");
+    }
+
     const fetchData = async () => {
       try {
         const url = `http://localhost:3008/tampilkategori`;
@@ -46,7 +50,7 @@ export default function Kategori() {
   const handleSelected = (id_kategori) => {
     setSelectedId(selectedId === id_kategori ? null : id_kategori);
   };
-
+  // console.log("env",);
   const selectedGor = lapangan.filter((lpn) => lpn.id_kategori === selectedId);
   console.log(selectedLapangan);
   if (selectedLapangan) {
@@ -114,9 +118,8 @@ function Olahraga({ kategori, onClick, selectedId }) {
           }`}
           onClick={() => onClick(ktr.id_kategori)}
         >
-          <img src={ktr.photo} alt="Kategori" />
+          <img src={process.env.NEXT_PUBLIC_BASE_API_URL +"/"+ktr.photo} alt="Kategori" />
           <p className="capitalize text-center">{ktr.tipe_lapangan}</p>
-          {console.log(ktr.photo)}
         </div>
       ))}
     </div>

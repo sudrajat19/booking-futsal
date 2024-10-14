@@ -21,7 +21,7 @@ export default function Lapangan({ lapangan }) {
 
   return (
     <>
-      <div className="container bg-white mx-auto   mt-[144px] py-8 px-[100px]">
+      <div className="container w-full bg-white mx-auto   mt-[144px] py-8 px-[100px]">
         <h2 className="p-4 normal-lg">GOR yang tersedia</h2>
         <div className="p-4 gap-5 grid sm:grid-cols-2 lg:grid-cols-4 cursor-pointer">
           {lapangan.map((lpn, index) => (
@@ -30,7 +30,7 @@ export default function Lapangan({ lapangan }) {
               onClick={() => setSelectedId(lpn.id_gor)}
               className="shadow-card grid grid-cols-2 gap-4 p-4 rounded-md sm:grid-cols-1"
             >
-              <img src="/gambar/futsal1.png" alt="lpng" className="w-full" />
+              <img src={process.env.NEXT_PUBLIC_BASE_API_URL + "/" + lpn.image_gor} alt="lpng" className="w-full" />
               <div>
                 <h2 className="normal-bs capitalize">{lpn.nama_gor}</h2>
                 <ul>
